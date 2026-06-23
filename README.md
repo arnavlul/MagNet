@@ -13,5 +13,4 @@ Predicting Tokamak guiding-center trajectories using PyTorch-based Symplectic Ne
 - **Objective:** Construct and evaluate PyTorch-based Symplectic Neural Networks.
 - **Current Step:** Preparing to build and benchmark the **LA-SympNet** (Linear-Activation) and **G-SympNet** (Gradient-based) architectures.
 
-## Documentation
-For full architectural details, roadmap, and model "bake-off" evaluation constraints, see [docs/MagNet.md](docs/MagNet.md).
+
