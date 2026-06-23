@@ -1,0 +1,9 @@
+docs/
+GORILLA/
+GORILLA_APPLETS/
+.venv/
+__pycache__/
+*.pyc
+data_generation/temp_batch_*/
+data_generation/raw_orbits/
+data_generation/resampled_orbits/
