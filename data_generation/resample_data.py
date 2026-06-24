@@ -8,7 +8,7 @@ RAW_ORBITS_DIR = BASE_DIR / "data_generation" / "raw_orbits"
 RESAMPLED_DIR = BASE_DIR / "data_generation" / "resampled_orbits"
 
 def process_particle(file_path):
-    # Load the raw orbit data: [t, s, theta, phi, vpar]
+    # Load the raw orbit data: [t, s, theta, phi, vpar, p_theta, p_phi]
     data = np.load(file_path)
     
     t = data[:, 0]
@@ -32,13 +32,22 @@ def process_particle(file_path):
     
     # Create cubic spline
     try:
+        # Unwrap angles to avoid spurious derivatives at the 0/2pi boundary
+        # coords indices: 0:s, 1:theta, 2:phi, 3:vpar, 4:p_theta, 5:p_phi
+        coords[:, 1] = np.unwrap(coords[:, 1])
+        coords[:, 2] = np.unwrap(coords[:, 2])
+        
         cs = CubicSpline(t, coords, axis=0)
         coords_uniform = cs(t_uniform)
+        
+        # Wrap angles back to [0, 2pi)
+        coords_uniform[:, 1] = np.mod(coords_uniform[:, 1], 2 * np.pi)
+        coords_uniform[:, 2] = np.mod(coords_uniform[:, 2], 2 * np.pi)
     except Exception as e:
         print(f"Spline failed for {file_path.name}: {e}")
         return False
         
-    # Stack [t, s, theta, phi, vpar]
+    # Stack [t, s, theta, phi, vpar, p_theta, p_phi]
     resampled_data = np.column_stack((t_uniform, coords_uniform))
     
     save_path = RESAMPLED_DIR / file_path.name
