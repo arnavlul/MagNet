@@ -40,9 +40,9 @@ def process_particle(file_path):
         cs = CubicSpline(t, coords, axis=0)
         coords_uniform = cs(t_uniform)
         
-        # Wrap angles back to [0, 2pi)
-        coords_uniform[:, 1] = np.mod(coords_uniform[:, 1], 2 * np.pi)
-        coords_uniform[:, 2] = np.mod(coords_uniform[:, 2], 2 * np.pi)
+        # We intentionally DO NOT wrap angles back to [0, 2pi) here.
+        # Keeping them unwrapped avoids 2pi discontinuity jumps in the training dataset targets,
+        # which bounded residual networks (like SympNets) cannot fit.
     except Exception as e:
         print(f"Spline failed for {file_path.name}: {e}")
         return False

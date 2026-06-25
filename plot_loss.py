@@ -20,6 +20,7 @@ def plot_training_history(history_file="training_history.npy"):
     ax1.set_title("Training Convergence")
     ax1.set_xlabel("Epochs")
     ax1.set_ylabel("MSE")
+    ax1.set_ylim(bottom=0)
     ax1.grid(True)
     ax1.legend()
 
@@ -32,6 +33,7 @@ def plot_training_history(history_file="training_history.npy"):
     ax2.set_title("Physical Test Error (NRMSE)")
     ax2.set_xlabel("Epochs")
     ax2.set_ylabel("Deviation from Perfection (%)")
+    ax2.set_ylim(bottom=0)
     ax2.grid(True)
     ax2.legend()
 
