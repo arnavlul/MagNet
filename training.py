@@ -23,7 +23,8 @@ def main():
             
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model = LASympNet(d=d, num_layers=num_layers, num_sublayers_per_linear=num_sublayers).to(device)
-        save_name = "LASympNet_Tokamak"
+        save_name = "LA"
+        config = {'net_type': 'LA', 'd': d, 'num_layers': num_layers, 'num_sublayers': num_sublayers}
         
     elif net_choice == 'G':
         try:
@@ -36,7 +37,8 @@ def main():
             
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model = GSympNet(d=d, n=n, num_layers=num_layers).to(device)
-        save_name = "GSympNet_Tokamak"
+        save_name = "G"
+        config = {'net_type': 'G', 'd': d, 'n': n, 'num_layers': num_layers}
     else:
         print("Invalid choice. Exiting.")
         return
@@ -62,7 +64,8 @@ def main():
         train_dataset=train_dataset,
         device=device,
         lr=lr,
-        save_name=save_name
+        save_name=save_name,
+        config=config
     )
     
     trainer.train(epochs=epochs)

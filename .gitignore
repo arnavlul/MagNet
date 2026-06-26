@@ -7,8 +7,10 @@ __pycache__/
 data_generation/temp_batch_*/
 data_generation/raw_orbits/
 data_generation/resampled_orbits/
+results/
 
 # Model artifacts and generated plots
 *.pth
 *.npy
+*.npz
 *.png

@@ -245,13 +245,14 @@ class TokamakDataLoader:
 
 
 class NetworkTrainer:
-    def __init__(self, model, train_loader, test_loader, train_dataset, device, lr=0.001, save_name="Model"):
+    def __init__(self, model, train_loader, test_loader, train_dataset, device, lr=0.001, save_name="Model", config=None):
         self.model = model
         self.train_loader = train_loader
         self.test_loader = test_loader
         self.train_dataset = train_dataset
         self.device = device
         self.save_name = save_name
+        self.config = config or {}
         self.criterion = nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
         self.history = {
@@ -276,6 +277,7 @@ class NetworkTrainer:
                 total_loss += loss.item()
                 
             avg_loss = total_loss / len(self.train_loader)
+            train_percentage_error = torch.sqrt(torch.tensor(avg_loss)).item() * 100.0
             
             self.model.eval()
             total_squared_errors = torch.zeros(4, device=self.device)
@@ -300,16 +302,39 @@ class NetworkTrainer:
             true_stds = self.train_dataset.x_raw.std(dim=0).to(self.device)
             component_percentage_error = (component_rmse / true_stds) * 100.0
             
-            print(f"Epoch [{epoch + 1}/{epochs}] | Train Loss (Normalized MSE): {avg_loss:.6f}")
+            print(f"Epoch [{epoch + 1}/{epochs}] | Train Error (%): {train_percentage_error:.4f}%")
             print(f"  Test Error (%): P_theta: {component_percentage_error[0]:.3f}% | P_phi: {component_percentage_error[1]:.3f}% | theta: {component_percentage_error[2]:.3f}% | phi: {component_percentage_error[3]:.3f}%")
             
-            self.history['train_loss'].append(avg_loss)
+            self.history['train_loss'].append(train_percentage_error)
             self.history['test_P_theta'].append(component_percentage_error[0].item())
             self.history['test_P_phi'].append(component_percentage_error[1].item())
             self.history['test_theta'].append(component_percentage_error[2].item())
             self.history['test_phi'].append(component_percentage_error[3].item())
             
-        np.save(f"{self.save_name}_history.npy", self.history)
-        torch.save(self.model.state_dict(), f"{self.save_name}.pth")
-        print("Training Complete! Model & History Saved")
+        import os
+        import json
+        weights_dir = Path("results/model_weights")
+        error_dir = Path("results/model_loss")
+        weights_dir.mkdir(parents=True, exist_ok=True)
+        error_dir.mkdir(parents=True, exist_ok=True)
+        
+        counter = 1
+        while True:
+            suffix = f"_{counter}"
+            weights_file = weights_dir / f"{self.save_name}_trained_weights{suffix}.pth"
+            error_file = error_dir / f"{self.save_name}_trained_error{suffix}.npy"
+            config_file = weights_dir / f"{self.save_name}_trained_weights{suffix}_config.json"
+            if not weights_file.exists() and not error_file.exists():
+                break
+            counter += 1
+            
+        np.save(error_file, self.history)
+        torch.save(self.model.state_dict(), weights_file)
+        with open(config_file, 'w') as f:
+            json.dump(self.config, f, indent=4)
+            
+        print(f"\nTraining Complete!")
+        print(f"Model saved as: {weights_file}")
+        print(f"Config saved as: {config_file}")
+        print(f"History saved as: {error_file}")
     

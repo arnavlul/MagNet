@@ -24,6 +24,8 @@ Predicting Tokamak guiding-center trajectories using PyTorch-based Symplectic Ne
 - **1-Step Prediction Results:** After correcting the dataset wraparound discontinuities, both architectures successfully captured the canonical geometry, achieving **<0.5% Normalized RMSE** across all variables on the test sets!
   - **LASympNet:** `P_theta: 0.204% | P_phi: 0.205% | theta: 0.097% | phi: 0.094%`
   - **GSympNet:** `P_theta: 0.233% | P_phi: 0.226% | theta: 0.182% | phi: 0.179%`
+- **Rollout Extrapolation Shortcomings:** While 1-step accuracy is high, auto-regressive 1000-step rollouts fail due to the unwrapped angle variables. Small velocity errors cause the unwrapped angles to drift to infinity, causing `NaN` explosions. 
+  - **Best Extrapolation Model:** `LA_5_step_schedule_lr_weights` achieved ~0.00% error on momenta but ~80% error on angles. **(Inconclusive due to angle drift instability)**
 - **Inferences:** 
   1. **Accuracy:** LA-SympNet achieved slightly better absolute accuracy on the positional angle variables ($\theta, \phi$), dropping below $0.1\%$, whereas G-SympNet plateaued just under $0.2\%$.
   2. **Convergence:** Both models are extremely robust and mathematically sound. With the continuous dataset and proper weight initializations, the underlying symplectic formulation perfectly encapsulates the Tokamak phase space.
@@ -41,6 +43,23 @@ Now that the baseline 1-step models are validated, the project is moving into:
 2. **Time-Conditioned SympNets:** Modifying the network to accept $\Delta t$ as an explicit input to create a universal, continuous-time surrogate.
 3. **Parameterized Hamiltonians:** Adding external control variables (like magnetic coil currents) as conditional inputs to act as a real-time digital twin.
 4. **Ablation Studies:** Comparing LA vs. G architectures on highly chaotic edge-plasma turbulence.
+5. **Universal Fusion Surrogate (Tokamaks & Stellarators):** By passing magnetic field coefficients directly into the network, MagNet will learn generalized physical laws across different reactor topologies.
+6. **Resolving the Angle Unwrapping Drift:** Testing methods to handle periodic boundary issues without causing numerical explosions, including Canonical Cartesian Mapping, Periodic Activations (`torch.sin()`), and Buckingham-Symplectic latent discovery.
+
+---
+
+## Repository File Structure
+Here is an overview of the purpose of all tracked files in this repository:
+
+- **`.gitignore`**: Specifies intentionally untracked files to ignore.
+- **`LICENSE`**: Open source license file for the repository.
+- **`README.md`**: Project documentation, status tracking, and setup instructions.
+- **`data_generation/base_inputs/`**: Contains Fortran namelist input files, magnetic field equilibrium files (e.g., `g_file_for_test`), and physical wall definitions required to initialize the GORILLA simulation engine.
+- **`data_generation/generate.py`**: A multiprocessing Python pipeline that runs concurrent GORILLA instances to rapidly simulate and extract raw guiding-center particle trajectories.
+- **`data_generation/resample_data.py`**: Post-processing script that applies mathematical cubic splines to resample the adaptive-timestep RK45 GORILLA outputs into perfectly uniform time-steps.
+- **`network_classes.py`**: The core PyTorch file containing the implementation of the `LASympNet` and `GSympNet` architectures, as well as the custom PyTorch `Dataset` that handles the Conformal Symplectic Scaling.
+- **`plot_loss.py`**: A utility script used to visualize training loss convergence curves from the generated data.
+- **`training.py`**: The primary execution script used to initialize the data loaders, instantiate the neural network, and run the 1-step training loop interactively.
 
 ---
 
